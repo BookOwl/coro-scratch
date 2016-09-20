@@ -8,7 +8,9 @@ A longstanding problem with transpiling Scratch projects to other languages is h
 
 # How complete is this?
 This is just a prototype for how a Scratch to Python transpiler might work. As such, it only supports a very small amount of blocks:
-![Supported blocks](supported.svg)
+
+![Supported blocks](supported.png)
+
 Also, the programs created by coro-scratch are CLI only, no graphics or sound blocks will be supported any time soon (except for say for, which just prints to the console.)
 
 # Usage
