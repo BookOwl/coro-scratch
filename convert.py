@@ -93,8 +93,10 @@ def convert_blocks(blocks):
     for block in blocks:
         if block.name == "say:duration:elapsed:from:":
             lines.append("yield from self.sayfor({}, {})".format(*map(convert_reporters, block.args)))
-        elif block.name =="wait:elapsed:from":
+        elif block.name == "wait:elapsed:from":
             lines.append("yield from self.wait({})".format(*map(convert_reporters, block.args)))
+        elif block.name == "doAsk":
+            lines.append("yield from self.ask({})".format(*map(convert_reporters, block.args)))
     return "\n".join(lines)
 
 def convert_reporters(block):
@@ -104,6 +106,11 @@ def convert_reporters(block):
         return "({} {} {})".format(convert_reporters(block.args[0]),
                                    block.name,
                                    convert_reporters(block.args[1]))
+    elif block.name == "concatenate:with:":
+        return "(str({}) + str({}))".format(*map(convert_reporters, block.args))
+    elif block.name == "answer":
+        return "self.answer()"
+
 def transpile(in_, out):
     "Transpiles the .sb2 file found at in_ into a .py which is then written to out"
     sprites = get_sprites(get_json(in_))

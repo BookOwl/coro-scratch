@@ -1,0 +1,12 @@
+say [] for () secs
+
+ask [] and wait
+
+wait () secs
+
+(answer)
+() + ()
+() - ()
+() * ()
+() / ()
+join [] []
