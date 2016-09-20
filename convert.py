@@ -32,10 +32,13 @@ def get_sprites(json):
     def convert(script):
         if isinstance(script, list):
             name, *args = script
-            if len(args) > 0 and isinstance(args[0], list):
-                return Block(name, [[convert(arg) for arg in sub] for sub in args])
-            else:
-                return Block(name, [convert(arg) for arg in args])
+            converted_args = []
+            for arg in args:
+                if isinstance(arg, list):
+                    converted_args.append([convert(sub) for sub in arg])
+                else:
+                    converted_args.append(convert(arg))
+            return Block(name, converted_args)
         return script
     sprites = []
     for child in json.children:
