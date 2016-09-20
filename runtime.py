@@ -1,18 +1,13 @@
-# runtime.py
-# coro-scratch runtime support
-
-import asyncio
-
-greenflags = []
-sprites = []
+runtime_greenflags = []
+runtime_sprites = []
 
 def create_sprite(cls):
-    assert issubclass(cls, Sprite), "{} is not a Sprite".format(cls)
+    assert issubclass(cls, runtime_Sprite), "{} is not a Sprite".format(cls)
     sprite = cls()
-    sprites.append(sprite)
-    greenflags.extend(sprite._greenflags)
+    runtime_sprites.append(sprite)
+    runtime_greenflags.extend(sprite._greenflags)
 
-class Sprite:
+class runtime_Sprite:
     def __init__(self):
         scripts = [(script, getattr(self, script)) for script in dir(self) if callable(getattr(self, script))]
         self._greenflags = [script for name, script in scripts if name.startswith("greenflag")]

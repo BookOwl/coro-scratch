@@ -32,7 +32,10 @@ def get_sprites(json):
     def convert(script):
         if isinstance(script, list):
             name, *args = script
-            return Block(name, [convert(arg) for arg in args])
+            if len(args) > 0 and isinstance(args[0], list):
+                return Block(name, [[convert(arg) for arg in sub] for sub in args])
+            else:
+                return Block(name, [convert(arg) for arg in args])
         return script
     sprites = []
     for child in json.children:
@@ -53,16 +56,16 @@ def sprites_to_py(sprites, name):
 # {}.py
 
 import asyncio
-import runtime
+{}
 
 loop = asyncio.get_event_loop()
 
-""".format(name)
+""".format(name, open("runtime.py").read())
 
     footer = """
 
 def main():
-    tasks = [asyncio.ensure_future(script()) for script in runtime.greenflags]
+    tasks = [asyncio.ensure_future(script()) for script in runtime_greenflags]
     loop.run_until_complete(asyncio.gather(*tasks))
     loop.close()
 
@@ -73,8 +76,8 @@ main()"""
 
 def convert_sprite(sprite):
     "Converts the sprite to a class"
-    class_template = """@runtime.create_sprite
-class {}(runtime.Sprite):
+    class_template = """@create_sprite
+class {}(runtime_Sprite):
 {}"""
     gf_template = """@asyncio.coroutine
 def greenflag{}(self):
@@ -91,12 +94,15 @@ def greenflag{}(self):
 def convert_blocks(blocks):
     lines = []
     for block in blocks:
+        print(block)
         if block.name == "say:duration:elapsed:from:":
             lines.append("yield from self.sayfor({}, {})".format(*map(convert_reporters, block.args)))
         elif block.name == "wait:elapsed:from":
             lines.append("yield from self.wait({})".format(*map(convert_reporters, block.args)))
         elif block.name == "doAsk":
             lines.append("yield from self.ask({})".format(*map(convert_reporters, block.args)))
+        elif block.name == "doForever":
+            lines.append("while True:\n{}".format(indent(4, convert_blocks(block.args[0]))))
     return "\n".join(lines)
 
 def convert_reporters(block):
