@@ -1,3 +1,5 @@
+when gf clicked
+
 say [] for () secs
 
 ask [] and wait

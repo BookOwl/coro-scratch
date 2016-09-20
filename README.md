@@ -11,6 +11,8 @@ This is just a prototype for how a Scratch to Python transpiler might work. As s
 
 ![Supported blocks](supported.png)
 
+coro-scratch _does_ support multiple sprites and scripts running at the same time. E.G two sprites with two green flag scripts each.
+
 Also, the programs created by coro-scratch are CLI only, no graphics or sound blocks will be supported any time soon (except for say for, which just prints to the console.)
 
 # Usage
