@@ -18,7 +18,7 @@ Also, the programs created by coro-scratch are CLI only, no graphics or sound bl
 # Usage
 Clone this repo, and run `python3 convert.py infile.sb2 outfile.py`
 
-The generated programs must be run on Python3.4+ and they must be able to import the runtime.py file. This might change in the future.
+The generated programs must be run on Python3.4+
 
 # License
 coro-scratch is released under the MIT license, see LICENSE.txt for details.
