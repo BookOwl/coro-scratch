@@ -97,7 +97,6 @@ def greenflag{}(self):
 def convert_blocks(blocks):
     lines = []
     for block in blocks:
-        print(block)
         if block.name == "say:duration:elapsed:from:":
             lines.append("yield from self.sayfor({}, {})".format(*map(convert_reporters, block.args)))
         elif block.name == "wait:elapsed:from":
@@ -105,15 +104,32 @@ def convert_blocks(blocks):
         elif block.name == "doAsk":
             lines.append("yield from self.ask({})".format(*map(convert_reporters, block.args)))
         elif block.name == "doForever":
-            lines.append("while True:\n{}".format(indent(4, convert_blocks(block.args[0]))))
+            lines.append("while True:\n{}\n    yield".format(indent(4, convert_blocks(block.args[0]))))
+        elif block.name == "doRepeat":
+            lines.append("for _ in range({}):\n{}\n    yield".format(convert_reporters(block.args[0]),
+                                                          indent(4, convert_blocks(block.args[1]))))
+        elif block.name == "doUntil":
+            lines.append("while not {}:\n{}\n    yield".format(convert_reporters(block.args[0]),
+                                                          indent(4, convert_blocks(block.args[1]))))
+        elif block.name == "doWaitUntil":
+            lines.append("while not {}:\n    yield".format(convert_reporters(block.args[0])))
     return "\n".join(lines)
 
 def convert_reporters(block):
     if isinstance(block, (str, int, float)):
         return repr(block)
-    elif block.name in ("+", "-", "*", "/"):
+    elif block.name in ("+", "-", "*", "/", ">", "<", "%"):
         return "({} {} {})".format(convert_reporters(block.args[0]),
                                    block.name,
+                                   convert_reporters(block.args[1]))
+    elif block.name == "=":
+        return "({} == {})".format(convert_reporters(block.args[0]),
+                                   convert_reporters(block.args[1]))
+    elif block.name == "&":
+        return "({} and {})".format(convert_reporters(block.args[0]),
+                                   convert_reporters(block.args[1]))
+    elif block.name == "|":
+        return "({} or {})".format(convert_reporters(block.args[0]),
                                    convert_reporters(block.args[1]))
     elif block.name == "concatenate:with:":
         return "(str({}) + str({}))".format(*map(convert_reporters, block.args))

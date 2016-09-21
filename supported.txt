@@ -6,9 +6,29 @@ ask [] and wait
 
 wait () secs
 
+forever
+
+end
+
+repeat ()
+
+end
+
+repeat until <>
+
+end
+
+wait until <>
+
 (answer)
 () + ()
 () - ()
 () * ()
 () / ()
 join [] []
+[] = []
+<> or <>
+<> and <>
+() > ()
+() < ()
+() mod ()
