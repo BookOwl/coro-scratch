@@ -31,13 +31,15 @@ def get_sprites(json):
     "Extracts the sprites from json"
     def convert(script):
         if isinstance(script, list):
+            print(script)
             name, *args = script
             converted_args = []
             for arg in args:
-                if isinstance(arg, list):
+                if isinstance(arg, list) and isinstance(arg[0], list):
                     converted_args.append([convert(sub) for sub in arg])
                 else:
                     converted_args.append(convert(arg))
+            print(Block(name, converted_args))
             return Block(name, converted_args)
         return script
     sprites = []
@@ -116,21 +118,26 @@ def convert_blocks(blocks):
     return "\n".join(lines)
 
 def convert_reporters(block):
-    if isinstance(block, (str, int, float)):
+    if isinstance(block, (str, int, float, bool)):
         return repr(block)
-    elif block.name in ("+", "-", "*", "/", ">", "<", "%"):
+    elif block.name in ("+", "-", "*", "/", "%"):
+        return "convert_and_run_math({}, {}, {})".format(
+                                   repr(block.name),
+                                   convert_reporters(block.args[0]),
+                                   convert_reporters(block.args[1]))
+    elif block.name in ("=", ">", "<"):
+        return "convert_and_run_comp({}, {}, {})".format(
+                                    repr(block.name),
+                                    convert_reporters(block.args[0]),
+                                    convert_reporters(block.args[1])
+        )
+    elif block.name in ("&", "|"):
+        op = {"&": "and", "|":"or"}[block.name]
         return "({} {} {})".format(convert_reporters(block.args[0]),
-                                   block.name,
+                                   op,
                                    convert_reporters(block.args[1]))
-    elif block.name == "=":
-        return "({} == {})".format(convert_reporters(block.args[0]),
-                                   convert_reporters(block.args[1]))
-    elif block.name == "&":
-        return "({} and {})".format(convert_reporters(block.args[0]),
-                                   convert_reporters(block.args[1]))
-    elif block.name == "|":
-        return "({} or {})".format(convert_reporters(block.args[0]),
-                                   convert_reporters(block.args[1]))
+    elif block.name == "not":
+        return "(not {})".format(convert_reporters(block.args[0]))
     elif block.name == "concatenate:with:":
         return "(str({}) + str({}))".format(*map(convert_reporters, block.args))
     elif block.name == "answer":

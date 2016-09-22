@@ -2,7 +2,6 @@ runtime_greenflags = []
 runtime_sprites = []
 
 def create_sprite(cls):
-    assert issubclass(cls, runtime_Sprite), "{} is not a Sprite".format(cls)
     sprite = cls()
     runtime_sprites.append(sprite)
     runtime_greenflags.extend(sprite._greenflags)
@@ -33,3 +32,31 @@ class runtime_Sprite:
     def answer(self):
         "Returns the answer"
         return self._answer
+
+def convert_to_num(n):
+    "Converts a number string to a Python number"
+    try:
+        return int(n), True
+    except ValueError:
+        try:
+            return int(n, base=16), True
+        except ValueError:
+            try:
+                return float(n), True
+            except ValueError:
+                return 0, False
+
+def convert_and_run_math(op, a, b):
+    num_a, _ = convert_to_num(a)
+    num_b, _ = convert_to_num(b)
+    return eval("{} {} {}".format(num_a, op, num_b))
+
+def convert_and_run_comp(op, a, b):
+    if op == "=":
+        op = "=="
+    num_a, a_is_num = convert_to_num(a)
+    num_b, b_is_num = convert_to_num(b)
+    if not a_is_num or not b_is_num:
+        return eval("{} {} {}".format(repr(str(a)), op, repr(str(b))))
+    else:
+        return eval("{} {} {}".format(num_a, op, num_b))
