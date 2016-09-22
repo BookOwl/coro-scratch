@@ -31,7 +31,6 @@ def get_sprites(json):
     "Extracts the sprites from json"
     def convert(script):
         if isinstance(script, list):
-            print(script)
             name, *args = script
             converted_args = []
             for arg in args:
@@ -39,7 +38,6 @@ def get_sprites(json):
                     converted_args.append([convert(sub) for sub in arg])
                 else:
                     converted_args.append(convert(arg))
-            print(Block(name, converted_args))
             return Block(name, converted_args)
         return script
     sprites = []
@@ -152,7 +150,4 @@ def transpile(in_, out):
 
 if __name__ == '__main__':
     import sys
-    #json = get_json("test2.sb2")
-    #sprites = get_sprites(json)
-    #print("\n\n".join(map(str, sprites[0].scripts)))
     transpile(sys.argv[1], sys.argv[2])
