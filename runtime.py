@@ -11,6 +11,7 @@ class runtime_Sprite:
         scripts = [(script, getattr(self, script)) for script in dir(self) if callable(getattr(self, script))]
         self._greenflags = [script for name, script in scripts if name.startswith("greenflag")]
         self._answer = ""
+        self._vars = dict(self.my_vars)
 
     @asyncio.coroutine
     def sayfor(self, thing, time):
@@ -32,6 +33,25 @@ class runtime_Sprite:
     def answer(self):
         "Returns the answer"
         return self._answer
+    def set_var(self, var, value):
+        "Sets var to value"
+        if var in global_vars:
+            global_vars[var] = value
+        else:
+            self._vars[var] = value
+    def change_var(self, var, value):
+        "Sets var to value"
+        if var in global_vars:
+            global_vars[var] = convert_and_run_math("+", global_vars[var], value)
+        else:
+            self._vars[var] = convert_and_run_math("+", self._vars[var], value)
+    def get_var(self, var):
+        "Return the value of var"
+        if var in global_vars:
+            return global_vars[var]
+        elif var in self._vars:
+            return self._vars[var]
+        return 0
 
 def convert_to_num(n):
     "Converts a number string to a Python number"

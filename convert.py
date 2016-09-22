@@ -16,10 +16,14 @@ class JSON_Wrap:
     def __dir__(self):
         return list(self.__data.keys())
     def __getattr__(self, attr):
-        return JSON_Wrap(self._data[attr])
+        try:
+            return JSON_Wrap(self._data[attr])
+        except KeyError:
+            raise AttributeError
 
-Sprite = collections.namedtuple("Sprite", "name scripts")
+Sprite = collections.namedtuple("Sprite", "name scripts vars")
 Block = collections.namedtuple("Block", "name args")
+Variable = collections.namedtuple("Variable", "name val")
 
 def get_json(path):
     "Extracts the json from a .sb2 file"
@@ -27,7 +31,7 @@ def get_json(path):
         with project.open("project.json", "r") as data:
             return JSON_Wrap(json_.loads(data.read().decode()))
 
-def get_sprites(json):
+def get_stage_and_sprites(json):
     "Extracts the sprites from json"
     def convert(script):
         if isinstance(script, list):
@@ -42,28 +46,33 @@ def get_sprites(json):
         return script
     sprites = []
     for child in json.children:
-        name = child.objName
-        scripts = []
-        for script in child.scripts:
-            script = script[2]
-            scripts.append([convert(block) for block in script])
-        sprites.append(Sprite(name, scripts))
-    return sprites
+        if hasattr(child, "objName"):
+            name = child.objName
+            scripts = []
+            for script in getattr(child, "scripts", []):
+                script = script[2]
+                scripts.append([convert(block) for block in script])
+            vars = [Variable(var.name, var.value) for var in getattr(child, "variables", [])]
+            sprites.append(Sprite(name, scripts, vars))
+    scripts = []
+    for script in getattr(json, "scripts", []):
+        script = script[2]
+        scripts.append([convert(block) for block in script])
+    vars = [Variable(var.name, var.value) for var in getattr(json, "variables", [])]
+    return Sprite("Stage", scripts, vars), sprites
 
 def indent(amount, code):
     return "\n".join(" "*amount + line for line in code.split("\n"))
 
-def sprites_to_py(sprites, name):
+def sprites_to_py(objects, name):
     "Converts the sprites to a .py file"
     header = """#! usr/bin/env python3
 # {}.py
 
 import asyncio
-{}
 
 loop = asyncio.get_event_loop()
-
-""".format(name, open("runtime.py").read())
+""".format(name)
 
     footer = """
 
@@ -74,6 +83,10 @@ def main():
 
 main()"""
 
+    stage, sprites = objects
+    global_vars = repr(dict(stage.vars))
+    header += "\nglobal_vars = {}\n".format(global_vars)
+    header += "\n{}\n".format(open("runtime.py").read())
     converted_sprites = [convert_sprite(sprite) for sprite in sprites]
     return header + '\n\n'.join(converted_sprites) + footer
 
@@ -81,6 +94,7 @@ def convert_sprite(sprite):
     "Converts the sprite to a class"
     class_template = """@create_sprite
 class {}(runtime_Sprite):
+    my_vars = {}
 {}"""
     gf_template = """@asyncio.coroutine
 def greenflag{}(self):
@@ -92,7 +106,9 @@ def greenflag{}(self):
         if hat.name == "whenGreenFlag":
             greenflags += 1
             funcs.append(gf_template.format(greenflags, indent(4, convert_blocks(blocks))))
-    return class_template.format(sprite.name, indent(4, "\n\n".join(funcs)))
+    return class_template.format(sprite.name,
+                                 repr([tuple(v) for v in sprite.vars]),
+                                 indent(4, ("\n\n".join(funcs) if funcs else "pass")))
 
 def convert_blocks(blocks):
     lines = []
@@ -113,6 +129,10 @@ def convert_blocks(blocks):
                                                           indent(4, convert_blocks(block.args[1]))))
         elif block.name == "doWaitUntil":
             lines.append("while not {}:\n    yield".format(convert_reporters(block.args[0])))
+        elif block.name == "setVar:to:":
+            lines.append("self.set_var({}, {})".format(*map(convert_reporters, block.args)))
+        elif block.name == "changeVar:by:":
+            lines.append("self.change_var({}, {})".format(*map(convert_reporters, block.args)))
     return "\n".join(lines)
 
 def convert_reporters(block):
@@ -140,11 +160,13 @@ def convert_reporters(block):
         return "(str({}) + str({}))".format(*map(convert_reporters, block.args))
     elif block.name == "answer":
         return "self.answer()"
+    elif block.name == "readVariable":
+        return "self.get_var({})".format(repr(block.args[0]))
 
 def transpile(in_, out):
     "Transpiles the .sb2 file found at in_ into a .py which is then written to out"
-    sprites = get_sprites(get_json(in_))
-    py = sprites_to_py(sprites, out)
+    objects = get_stage_and_sprites(get_json(in_))
+    py = sprites_to_py(objects, out)
     with open(out, "w") as f:
         f.write(py)
 
