@@ -20,6 +20,11 @@ end
 
 wait until <>
 
+set [var v] to []
+
+change [var v] by ()
+(var)
+
 (answer)
 () + ()
 () - ()
