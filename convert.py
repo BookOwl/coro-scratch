@@ -14,7 +14,7 @@ class JSON_Wrap:
     def __init__(self, data):
         self._data = data
     def __dir__(self):
-        return list(self.__data.keys)
+        return list(self._data.keys)
     def __repr__(self):
         return repr(self._data)
     def __getattr__(self, attr):
