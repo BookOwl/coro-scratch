@@ -96,13 +96,14 @@ main()"""
     global_vars = repr(dict(stage.vars))
     header += "\nglobal_vars = {}\n".format(global_vars)
     header += "\n{}\n".format(open("runtime.py").read())
-    converted_sprites = [convert_sprite(sprite) for sprite in sprites]
-    return header + '\n\n'.join(converted_sprites) + footer
+    converted_stage = convert_object("Stage", stage)
+    converted_sprites = [convert_object("Sprite", sprite) for sprite in sprites]
+    return header + "{}\n\n".format(converted_stage) + '\n\n'.join(converted_sprites) + footer
 
-def convert_sprite(sprite):
+def convert_object(type_, sprite):
     "Converts the sprite to a class"
     class_template = """@create_sprite
-class {}(runtime_Sprite):
+class {}(runtime_{}):
     my_vars = {}
 {}"""
     gf_template = """@asyncio.coroutine
@@ -125,6 +126,7 @@ def {}(self, {}):
             body = indent(4, convert_blocks(blocks))
             funcs.append(custom_template.format(block_name, args, body))
     return class_template.format(sprite.name,
+                                 type_,
                                  repr([tuple(v) for v in sprite.vars]),
                                  indent(4, ("\n\n".join(funcs) if funcs else "pass")))
 
