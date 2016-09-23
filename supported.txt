@@ -25,6 +25,16 @@ set [var v] to []
 change [var v] by ()
 (var)
 
+if <> then
+end
+
+if <> then
+else
+end
+
+define custom block (a) (b)
+end
+
 (answer)
 () + ()
 () - ()
