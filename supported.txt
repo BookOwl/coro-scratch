@@ -39,7 +39,6 @@ else
 end
 
 define custom block (a) (b)
-end
 
 (answer)
 () + ()
