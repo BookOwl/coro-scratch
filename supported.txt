@@ -2,6 +2,12 @@ when gf clicked
 
 say [] for () secs
 
+say []
+
+think [] for () secs
+
+think []
+
 ask [] and wait
 
 wait () secs

@@ -135,6 +135,12 @@ def convert_blocks(blocks):
     for block in blocks:
         if block.name == "say:duration:elapsed:from:":
             lines.append("yield from self.sayfor({}, {})".format(*map(convert_reporters, block.args)))
+        elif block.name == "say:":
+            lines.append("yield from self.say({})".format(*map(convert_reporters, block.args)))
+        elif block.name == "think:duration:elapsed:from:":
+            lines.append("yield from self.thinkfor({}, {})".format(*map(convert_reporters, block.args)))
+        elif block.name == "think:":
+            lines.append("yield from self.think({})".format(*map(convert_reporters, block.args)))
         elif block.name == "wait:elapsed:from":
             lines.append("yield from self.wait({})".format(*map(convert_reporters, block.args)))
         elif block.name == "doAsk":

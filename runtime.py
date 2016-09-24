@@ -66,6 +66,19 @@ class runtime_Sprite(runtime_Stage):
         "Says thing for time seconds"
         print("{} says '{}'".format(self.__class__.__name__, thing))
         yield from asyncio.sleep(time)
+    @asyncio.coroutine
+    def say(self, thing):
+        "Says thing"
+        print("{} says '{}'".format(self.__class__.__name__, thing))
+    @asyncio.coroutine
+    def thinkfor(self, thing, time):
+        "Thinks thing for time seconds"
+        print("{} thinks '{}'".format(self.__class__.__name__, thing))
+        yield from asyncio.sleep(time)
+    @asyncio.coroutine
+    def think(self, thing):
+        "Thinks thing"
+        print("{} thinks '{}'".format(self.__class__.__name__, thing))
 
 def convert_and_run_math(op, a, b):
     num_a, _ = convert_to_num(a)
