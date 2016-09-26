@@ -31,6 +31,19 @@ set [var v] to []
 change [var v] by ()
 (var)
 
+add [] to [list v]
+
+delete (1 v) of [list v]
+
+insert [] at (1 v) of [list v]
+
+replace item (1 v) of [list v] with []
+
+(list ::list)
+<[list v] contains []>
+(item (1 v) of [list v])
+(length of [list v])
+
 if <> then
 end
 

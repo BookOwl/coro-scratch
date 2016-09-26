@@ -12,6 +12,7 @@ class runtime_Stage:
         self._greenflags = [script for name, script in scripts if name.startswith("greenflag")]
         self._answer = ""
         self._vars = dict(self.my_vars)
+        self._lists = dict(self.my_lists)
 
     @asyncio.coroutine
     def wait(self, time):
@@ -46,6 +47,60 @@ class runtime_Stage:
         elif var in self._vars:
             return self._vars[var]
         return 0
+    def _get_list(self, listName):
+        "Returns the list listName"
+        if listName in global_lists:
+            return global_lists[listName]
+        elif listName in self._lists:
+            return self._lists[listName]
+        else:
+            self._lists[listName] = []
+            return self._lists[listName]
+    def get_list_as_string(self, listName):
+        l = self._get_list(listName)
+        if all([len(item) <= 1 for item in l]):
+            return "".join(map(str, l))
+        else:
+            return " ".join(map(str, l))
+    def add_to_list(self, thing, listName):
+        self._get_list(listName).append(str(thing))
+    def insert_thing_in_list(self, thing, place, listName):
+        l = self._get_list(listName)
+        if place == "last":
+            l.append(thing)
+        elif place == "random":
+            l.insert(random.randrange(0, len(l)), thing)
+        else:
+            l.insert(int(convert_to_num(place)[0])-1, thing)
+    def replace_thing_in_list(self, place, listName, thing):
+        l = self._get_list(listName)
+        if place == "last":
+            l[-1] = thing
+        elif place == "random":
+            l[random.randrange(0, len(l))] = thing
+        else:
+            l[int(convert_to_num(place)[0])-1] = thing
+    def delete_stuff_from_list(self, amount, listName):
+        l = self._get_list(listName)
+        if amount == "all":
+            l.clear()
+        elif amount == "last":
+            del l[-1]
+        else:
+            del l[int(convert_to_num(amount)[0])-1]
+    def length_of_list(self, listName):
+        return len(self._get_list(listName))
+    def list_contains_thing(self, listName, thing):
+        return str(thing).lower() in [str(item).lower()
+                                      for item in self._get_list(listName)]
+    def item_of_list(self, place, listName):
+        l = self._get_list(listName)
+        if place == "last":
+            return l[-1]
+        elif place == "random":
+            return random.choice(l)
+        else:
+            return l[int(convert_to_num(place)[0])-1]
 
 def convert_to_num(n):
     "Converts a number string to a Python number"
