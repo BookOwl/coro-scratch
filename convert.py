@@ -23,9 +23,10 @@ class JSON_Wrap:
         except KeyError:
             raise AttributeError
 
-Sprite = collections.namedtuple("Sprite", "name scripts vars")
+Sprite = collections.namedtuple("Sprite", "name scripts vars lists")
 Block = collections.namedtuple("Block", "name args")
 Variable = collections.namedtuple("Variable", "name val")
+List = collections.namedtuple("List", "name contents")
 
 def get_json(path):
     "Extracts the json from a .sb2 file"
@@ -62,13 +63,15 @@ def get_stage_and_sprites(json):
                 else:
                     scripts.append([convert(block) for block in script])
             vars = [Variable(var.name, var.value) for var in getattr(child, "variables", [])]
-            sprites.append(Sprite(name, scripts, vars))
+            lists = [List(l.listName, l.contents) for l in getattr(child, "lists", [])]
+            sprites.append(Sprite(name, scripts, vars, lists))
     scripts = []
     for script in getattr(json, "scripts", []):
         script = script[2]
         scripts.append([convert(block) for block in script])
     vars = [Variable(var.name, var.value) for var in getattr(json, "variables", [])]
-    return Sprite("Stage", scripts, vars), sprites
+    lists = [List(l.listName, l.contents) for l in getattr(json, "lists", [])]
+    return Sprite("Stage", scripts, vars, lists), sprites
 
 def indent(amount, code):
     return "\n".join(" "*amount + line for line in code.split("\n"))
@@ -78,7 +81,7 @@ def sprites_to_py(objects, name):
     header = """#! usr/bin/env python3
 # {}
 
-import asyncio
+import asyncio, random
 
 loop = asyncio.get_event_loop()
 """.format(name)
@@ -94,7 +97,9 @@ main()"""
 
     stage, sprites = objects
     global_vars = repr(dict(stage.vars))
+    global_lists = repr(dict(stage.lists))
     header += "\nglobal_vars = {}\n".format(global_vars)
+    header += "global_lists = {}\n".format(global_lists)
     header += "\n{}\n".format(open("runtime.py").read())
     converted_stage = convert_object("Stage", stage)
     converted_sprites = [convert_object("Sprite", sprite) for sprite in sprites]
@@ -105,6 +110,7 @@ def convert_object(type_, sprite):
     class_template = """@create_sprite
 class {}(runtime_{}):
     my_vars = {}
+    my_lists = {}
 {}"""
     gf_template = """@asyncio.coroutine
 def greenflag{}(self):
@@ -128,6 +134,7 @@ def {}(self, {}):
     return class_template.format(sprite.name,
                                  type_,
                                  repr([tuple(v) for v in sprite.vars]),
+                                 repr([tuple(l) for l in sprite.lists]),
                                  indent(4, ("\n\n".join(funcs) if funcs else "pass")))
 
 def convert_blocks(blocks):
@@ -173,6 +180,17 @@ def convert_blocks(blocks):
             pred = convert_reporters(block.args[0])
             if_clause = convert_blocks(block.args[1])
             lines.append("if {}:\n{}".format(pred, indent(4, if_clause)))
+        elif block.name == "append:toList:":
+            lines.append("self.add_to_list({}, {})".format(*map(convert_reporters, block.args)))
+        elif block.name == "deleteLine:ofList:":
+            lines.append("self.delete_stuff_from_list({}, {})".format(
+                                                      *map(convert_reporters, block.args)))
+        elif block.name == "insert:at:ofList:":
+            lines.append("self.insert_thing_in_list({}, {}, {})".format(
+                                                    *map(convert_reporters, block.args)))
+        elif block.name == "setLine:ofList:to:":
+            lines.append("self.replace_thing_in_list({}, {}, {})".format(
+                                                     *map(convert_reporters, block.args)))
     if lines:
         return "\n".join(lines)
     else:
@@ -207,6 +225,14 @@ def convert_reporters(block):
         return "self.get_var({})".format(repr(block.args[0]))
     elif block.name == "getParam":
         return block.args[0]
+    elif block.name == "contentsOfList:":
+        return "self.get_list_as_string({})".format(convert_reporters(block.args[0]))
+    elif block.name == "lineCountOfList:":
+        return "self.length_of_list({})".format(convert_reporters(block.args[0]))
+    elif block.name == "list:contains:":
+        return "self.list_contains_thing({}, {})".format(*map(convert_reporters, block.args))
+    elif block.name == "getLine:ofList:":
+        return "self.item_of_list({}, {})".format(*map(convert_reporters, block.args))
 
 def transpile(in_, out):
     "Transpiles the .sb2 file found at in_ into a .py which is then written to out"
