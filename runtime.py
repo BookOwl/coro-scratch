@@ -104,6 +104,8 @@ class runtime_Stage:
 
 def convert_to_num(n):
     "Converts a number string to a Python number"
+    if isinstance(n, (int, float)):
+        return (n, True)
     try:
         return int(n), True
     except ValueError:
@@ -149,3 +151,10 @@ def convert_and_run_comp(op, a, b):
         return eval("{} {} {}".format(repr(str(a)), op, repr(str(b))))
     else:
         return eval("{} {} {}".format(num_a, op, num_b))
+def pick_random(a, b):
+    a, b = map(convert_to_num, (a, b))
+    a, b = a[0], b[0]
+    if isinstance(a, float) or isinstance(b, float):
+        return random.uniform(a, b)
+    else:
+        return random.randint(a, b)

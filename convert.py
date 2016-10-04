@@ -233,6 +233,8 @@ def convert_reporters(block):
         return "self.list_contains_thing({}, {})".format(*map(convert_reporters, block.args))
     elif block.name == "getLine:ofList:":
         return "self.item_of_list({}, {})".format(*map(convert_reporters, block.args))
+    elif block.name == "randomFrom:to:":
+        return "pick_random({}, {})".format(*map(convert_reporters, block.args))
 
 def transpile(in_, out):
     "Transpiles the .sb2 file found at in_ into a .py which is then written to out"
